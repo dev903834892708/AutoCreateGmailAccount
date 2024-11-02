@@ -6,6 +6,9 @@
 
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 import random
 import time
@@ -26,92 +29,89 @@ class CreateGmail:
     def Initialize(self):
         self._browser = webdriver.Chrome()
         self._browser.delete_all_cookies()
-        self._browser.get("https://accounts.google.com/SignUp?hl=en")
+        self._browser.get("https://accounts.google.com/signup/v2/webcreateaccount?flowName=GlifWebSignIn&flowEntry=SignUp")
 
     def SetRecoveryEmail(self):
-        CreatedEmails = pd.read_csv("./data/CreatedAccounts.csv")["username"].values
+        CreatedEmails = pd.read_csv("./data/CreatedAccounts.csv")[
+            "username"
+        ].values
         if len(CreatedEmails) < 1:
             self.recovery_email = "pj.cs.vt@gmail.com"
         else:
             self.recovery_email = CreatedEmails[-1] + "@gmail.com"
 
     def CreateAccount(self):
-        # self.SetRecoveryEmail()
-        self._browser.find_element_by_css_selector(r'input[id="firstName"]').send_keys(
-            self._firstname
-        )
+        wait = WebDriverWait(self._browser, 20)
+        
+        # Fill in first name
+        first_name_elem = wait.until(EC.presence_of_element_located((By.NAME, 'firstName')))
+        first_name_elem.send_keys(self._firstname)
         time.sleep(1)
-        self._browser.find_element_by_css_selector(r'input[id="lastName"]').send_keys(
-            self._lastname
-        )
+        
+        # Fill in last name
+        last_name_elem = wait.until(EC.presence_of_element_located((By.NAME, 'lastName')))
+        last_name_elem.send_keys(self._lastname)
         time.sleep(1)
-        self._browser.find_element_by_css_selector(r'input[id="username"]').send_keys(
-            self._username
-        )
+        
+        # Fill in username
+        username_elem = wait.until(EC.presence_of_element_located((By.NAME, 'Username')))
+        username_elem.send_keys(self._username)
         time.sleep(1)
-        self._browser.find_element_by_css_selector(r'input[name="Passwd"]').send_keys(self._pswd)
+        
+        # Fill in password
+        password_elem = wait.until(EC.presence_of_element_located((By.NAME, 'Passwd')))
+        password_elem.send_keys(self._pswd)
         time.sleep(1 + 3 * random.random())
-        self._browser.find_element_by_css_selector(r'input[name="ConfirmPasswd"]').send_keys(
-            self._pswd
-        )
-        self._browser.find_element_by_css_selector(r'div[id="accountDetailsNext"]').click()
+        
+        # Confirm password
+        confirm_password_elem = wait.until(EC.presence_of_element_located((By.NAME, 'ConfirmPasswd')))
+        confirm_password_elem.send_keys(self._pswd)
+        
+        # Click next button
+        next_button_elem = wait.until(EC.element_to_be_clickable((By.XPATH, "//span[text()='Next']/parent::button")))
+        next_button_elem.click()
         self._browser.implicitly_wait(10)
 
         try:
-            self._browser.find_element_by_css_selector(
-                "#month > option:nth-child(%d)" % random.randint(1, 13)
-            ).click()
+            month_elem = wait.until(EC.presence_of_element_located((By.ID, "month")))
+            month_elem.click()
+            month_option_elem = wait.until(EC.presence_of_element_located((By.XPATH, "//select[@id='month']/option[%d]" % random.randint(1, 12))))
+            month_option_elem.click()
         except:
             self._browser.quit()
-            # raise ValueError("IP Mac Limited. Stop the Script...")
-            # sys.exit(0)
             sys.exit("IP Mac Limited. Stop the Script...")
         else:
             time.sleep(1 + 3 * random.random())
-            # self._browser.find_element_by_css_selector(r'div.fQxwff:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > input:nth-child(1)').send_keys(self.recovery_email)
-            # time.sleep(1)
-            self._browser.find_element_by_css_selector(r'input[id="day"]').send_keys(
-                random.randint(1, 28)
-            )
+            day_elem = wait.until(EC.presence_of_element_located((By.ID, 'day')))
+            day_elem.send_keys(random.randint(1, 28))
             time.sleep(1)
-            self._browser.find_element_by_css_selector(r'input[id="year"]').send_keys(
-                random.randint(1990, 2000)
-            )
+            year_elem = wait.until(EC.presence_of_element_located((By.ID, 'year')))
+            year_elem.send_keys(random.randint(1990, 2000))
             time.sleep(1)
             try:
-                self._browser.find_element_by_css_selector("#gender").click()
+                gender_elem = wait.until(EC.element_to_be_clickable((By.ID, "gender")))
+                gender_elem.click()
+                gender_option_elem = wait.until(EC.element_to_be_clickable((By.XPATH, "//select[@id='gender']/option[%d]" % random.randint(1, 4))))
+                gender_option_elem.click()
             except:
-                print("Cannot locate Gender Blockm Please manually click it. Sleep 1 min...")
+                print("Cannot locate Gender Block, Please manually click it. Sleep 1 min...")
                 time.sleep(60)
                 pass
-            try:
-                time.sleep(0.5)
-                try:
-                    self._browser.find_element_by_css_selector(
-                        "#gender > option:nth-child(%d)" % random.randint(1, 4)
-                    ).click()
-                except:
-                    self._browser.quit()
-                    sys.exit(1)
-                    self._browser.find_elements_by_xpath("").click()
-            except:
-                time.sleep(0.5)
-                self._browser.find_element_by_xpath(
-                    "/html/body/div[1]/div/div[2]/div[1]/div[2]/form/div[2]/div/div[4]/div[1]/div/div[2]/select/option[%d]"
-                    % random.randint(1, 4)
-                ).click()
             time.sleep(1 + 3 * random.random())
-            self._browser.find_element_by_css_selector(r'div[id="personalDetailsNext"]').click()
+            personal_details_next_elem = wait.until(EC.element_to_be_clickable((By.XPATH, "//span[text()='Next']/parent::button")))
+            personal_details_next_elem.click()
             self._browser.implicitly_wait(10)
             time.sleep(1)
             while True:
                 try:
-                    self._browser.find_element_by_css_selector(".mUbCce").click()
+                    captcha_elem = self._browser.find_element(By.CSS_SELECTOR, ".mUbCce")
+                    captcha_elem.click()
                     time.sleep(1)
                 except Exception as e:
                     print(e)
                     break
-            self._browser.find_element_by_css_selector("#termsofserviceNext").click()
+            terms_of_service_next_elem = wait.until(EC.element_to_be_clickable((By.XPATH, "//span[text()='I agree']/parent::button")))
+            terms_of_service_next_elem.click()
             self._browser.implicitly_wait(10)
 
             self._Donefile.write(self._username + "," + self._pswd + "\n")
@@ -124,16 +124,14 @@ class CreateGmail:
         LastName = pd.read_csv(lastnamefile).sample(frac=1)
         num = min(len(FirstName), len(LastName))
         if len(FirstName) > len(LastName):
-            UserInfo = LastName
-            UserInfo["firstname"] = FirstName.values[:num]
+            UserInfo = LastName.copy()
+            UserInfo["firstname"] = FirstName.iloc[:num].values.flatten()
         else:
-            UserInfo = FirstName
-            UserInfo["lastname"] = LastName.values[:num]
+            UserInfo = FirstName.copy()
+            UserInfo["lastname"] = LastName.iloc[:num].values.flatten()
         UserInfo.index = range(num)
-        UserInfo.dropna()
-        suffix = ""
-        for i in range(6):
-            suffix += str(random.randint(0, 9))
+        UserInfo.dropna(inplace=True)
+        suffix = "".join([str(random.randint(0, 9)) for _ in range(6)])
         UserInfo["username"] = UserInfo["firstname"] + UserInfo["lastname"] + suffix
         UserInfo["pswd"] = "super" + UserInfo["firstname"] + "233"
         return UserInfo
@@ -158,4 +156,3 @@ if __name__ == "__main__":
         CGM = CreateGmail(*UserInfoSeries)
         CGM.CreateAccount()
         # CGM.RunAppsScript(SharedScript)
-
